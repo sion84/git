@@ -734,10 +734,10 @@ test_expect_success 'reject adding remote with an invalid name' '
 # the last two ones check if the config is updated.
 
 test_expect_success 'rename a remote' '
+	test_config_global remote.pushDefault origin &&
 	git clone one four &&
 	(
 		cd four &&
-		test_config_global remote.pushDefault origin &&
 		git config branch.master.pushRemote origin &&
 		git remote rename origin upstream &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
@@ -761,10 +761,10 @@ test_expect_success 'rename a remote renames repo remote.pushDefault' '
 '
 
 test_expect_success 'rename a remote renames repo remote.pushDefault but ignores global' '
+	test_config_global remote.pushDefault other &&
 	git clone one four.2 &&
 	(
 		cd four.2 &&
-		test_config_global remote.pushDefault other &&
 		git config remote.pushDefault origin &&
 		git remote rename origin upstream &&
 		test "$(git config --global remote.pushDefault)" = "other" &&
@@ -773,10 +773,10 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but ignores
 '
 
 test_expect_success 'rename a remote renames repo remote.pushDefault but keeps global' '
+	test_config_global remote.pushDefault origin &&
 	git clone one four.3 &&
 	(
 		cd four.3 &&
-		test_config_global remote.pushDefault origin &&
 		git config remote.pushDefault origin &&
 		git remote rename origin upstream &&
 		test "$(git config --global remote.pushDefault)" = "origin" &&
@@ -823,10 +823,10 @@ test_expect_success 'rename succeeds with existing remote.<target>.prune' '
 '
 
 test_expect_success 'remove a remote' '
+	test_config_global remote.pushDefault origin &&
 	git clone one four.five &&
 	(
 		cd four.five &&
-		test_config_global remote.pushDefault origin &&
 		git config branch.master.pushRemote origin &&
 		git remote remove origin &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
@@ -847,10 +847,10 @@ test_expect_success 'remove a remote removes repo remote.pushDefault' '
 '
 
 test_expect_success 'remove a remote removes repo remote.pushDefault but ignores global' '
+	test_config_global remote.pushDefault other &&
 	git clone one four.five.2 &&
 	(
 		cd four.five.2 &&
-		test_config_global remote.pushDefault other &&
 		git config remote.pushDefault origin &&
 		git remote remove origin &&
 		test "$(git config --global remote.pushDefault)" = "other" &&
@@ -859,10 +859,10 @@ test_expect_success 'remove a remote removes repo remote.pushDefault but ignores
 '
 
 test_expect_success 'remove a remote removes repo remote.pushDefault but keeps global' '
+	test_config_global remote.pushDefault origin &&
 	git clone one four.five.3 &&
 	(
 		cd four.five.3 &&
-		test_config_global remote.pushDefault origin &&
 		git config remote.pushDefault origin &&
 		git remote remove origin &&
 		test "$(git config --global remote.pushDefault)" = "origin" &&
