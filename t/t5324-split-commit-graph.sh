@@ -42,7 +42,7 @@ test_expect_success 'create commits and write commit-graph' '
 		test_commit $i &&
 		git branch commits/$i || return 1
 	done &&
-	git commit-graph write --reachable &&
+	git commit-graph write --input=reachable &&
 	test_path_is_file $infodir/commit-graph &&
 	graph_read_expect 3
 '
@@ -94,7 +94,7 @@ test_expect_success 'add more commits, and write a new base graph' '
 	git reset --hard commits/4 &&
 	git merge commits/6 &&
 	git branch merge/2 &&
-	git commit-graph write --reachable &&
+	git commit-graph write --input=reachable &&
 	graph_read_expect 12
 '
 
@@ -106,7 +106,7 @@ test_expect_success 'fork and fail to base a chain on a commit-graph file' '
 		rm .git/objects/info/commit-graph &&
 		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
 		test_commit new-commit &&
-		git commit-graph write --reachable --split &&
+		git commit-graph write --input=reachable --split &&
 		test_path_is_file $graphdir/commit-graph-chain &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
 		verify_chain_files_exist $graphdir
@@ -119,7 +119,7 @@ test_expect_success 'add three more commits, write a tip graph' '
 	git merge commits/5 &&
 	git merge merge/2 &&
 	git branch merge/3 &&
-	git commit-graph write --reachable --split &&
+	git commit-graph write --input=reachable --split &&
 	test_path_is_missing $infodir/commit-graph &&
 	test_path_is_file $graphdir/commit-graph-chain &&
 	ls $graphdir/graph-*.graph >graph-files &&
@@ -132,7 +132,7 @@ graph_git_behavior 'split commit-graph: merge 3 vs 2' merge/3 merge/2
 test_expect_success 'add one commit, write a tip graph' '
 	test_commit 11 &&
 	git branch commits/11 &&
-	git commit-graph write --reachable --split &&
+	git commit-graph write --input=reachable --split &&
 	test_path_is_missing $infodir/commit-graph &&
 	test_path_is_file $graphdir/commit-graph-chain &&
 	ls $graphdir/graph-*.graph >graph-files &&
@@ -145,7 +145,7 @@ graph_git_behavior 'three-layer commit-graph: commit 11 vs 6' commits/11 commits
 test_expect_success 'add one commit, write a merged graph' '
 	test_commit 12 &&
 	git branch commits/12 &&
-	git commit-graph write --reachable --split &&
+	git commit-graph write --input=reachable --split &&
 	test_path_is_file $graphdir/commit-graph-chain &&
 	test_line_count = 2 $graphdir/commit-graph-chain &&
 	ls $graphdir/graph-*.graph >graph-files &&
@@ -164,7 +164,7 @@ test_expect_success 'create fork and chain across alternate' '
 		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
 		test_commit 13 &&
 		git branch commits/13 &&
-		git commit-graph write --reachable --split &&
+		git commit-graph write --input=reachable --split &&
 		test_path_is_file $graphdir/commit-graph-chain &&
 		test_line_count = 3 $graphdir/commit-graph-chain &&
 		ls $graphdir/graph-*.graph >graph-files &&
@@ -173,7 +173,7 @@ test_expect_success 'create fork and chain across alternate' '
 		git -c core.commitGraph=false rev-list HEAD >actual &&
 		test_cmp expect actual &&
 		test_commit 14 &&
-		git commit-graph write --reachable --split --object-dir=.git/objects/ &&
+		git commit-graph write --input=reachable --split --object-dir=.git/objects/ &&
 		test_line_count = 3 $graphdir/commit-graph-chain &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 1 graph-files
@@ -189,7 +189,7 @@ test_expect_success 'test merge stragety constants' '
 		git config core.commitGraph true &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 14 &&
-		git commit-graph write --reachable --split --size-multiple=2 &&
+		git commit-graph write --input=reachable --split --size-multiple=2 &&
 		test_line_count = 3 $graphdir/commit-graph-chain
 
 	) &&
@@ -199,7 +199,7 @@ test_expect_success 'test merge stragety constants' '
 		git config core.commitGraph true &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 14 &&
-		git commit-graph write --reachable --split --size-multiple=10 &&
+		git commit-graph write --input=reachable --split --size-multiple=10 &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 1 graph-files
@@ -210,7 +210,7 @@ test_expect_success 'test merge stragety constants' '
 		git config core.commitGraph true &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 15 &&
-		git commit-graph write --reachable --split --size-multiple=10 --expire-time=1980-01-01 &&
+		git commit-graph write --input=reachable --split --size-multiple=10 --expire-time=1980-01-01 &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 3 graph-files
@@ -222,7 +222,7 @@ test_expect_success 'test merge stragety constants' '
 		test_line_count = 2 $graphdir/commit-graph-chain &&
 		test_commit 16 &&
 		test_commit 17 &&
-		git commit-graph write --reachable --split --max-commits=1 &&
+		git commit-graph write --input=reachable --split --max-commits=1 &&
 		test_line_count = 1 $graphdir/commit-graph-chain &&
 		ls $graphdir/graph-*.graph >graph-files &&
 		test_line_count = 1 graph-files
@@ -234,7 +234,7 @@ test_expect_success 'remove commit-graph-chain file after flattening' '
 	(
 		cd flatten &&
 		test_line_count = 2 $graphdir/commit-graph-chain &&
-		git commit-graph write --reachable &&
+		git commit-graph write --input=reachable &&
 		test_path_is_missing $graphdir/commit-graph-chain &&
 		ls $graphdir >graph-files &&
 		test_line_count = 0 graph-files
@@ -313,7 +313,7 @@ test_expect_success 'verify across alternates' '
 		echo "$altdir" >.git/objects/info/alternates &&
 		git commit-graph verify --object-dir="$altdir/" &&
 		test_commit extra &&
-		git commit-graph write --reachable --split &&
+		git commit-graph write --input=reachable --split &&
 		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
 		corrupt_file "$tip_file" 100 "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
@@ -326,7 +326,7 @@ test_expect_success 'add octopus merge' '
 	git reset --hard commits/10 &&
 	git merge commits/3 commits/4 &&
 	git branch merge/octopus &&
-	git commit-graph write --reachable --split &&
+	git commit-graph write --input=reachable --split &&
 	git commit-graph verify --progress 2>err &&
 	test_line_count = 3 err &&
 	test_i18ngrep ! warning err &&
@@ -336,7 +336,7 @@ test_expect_success 'add octopus merge' '
 graph_git_behavior 'graph exists' merge/octopus commits/12
 
 test_expect_success 'split across alternate where alternate is not split' '
-	git commit-graph write --reachable &&
+	git commit-graph write --input=reachable &&
 	test_path_is_file .git/objects/info/commit-graph &&
 	cp .git/objects/info/commit-graph . &&
 	git clone --no-hardlinks . alt-split &&
@@ -345,10 +345,61 @@ test_expect_success 'split across alternate where alternate is not split' '
 		rm -f .git/objects/info/commit-graph &&
 		echo "$(pwd)"/../.git/objects >.git/objects/info/alternates &&
 		test_commit 18 &&
-		git commit-graph write --reachable --split &&
+		git commit-graph write --input=reachable --split &&
 		test_line_count = 1 $graphdir/commit-graph-chain
 	) &&
 	test_cmp commit-graph .git/objects/info/commit-graph
+'
+
+test_expect_success '--split=merge-all always merges incrementals' '
+	test_when_finished rm -rf a b c &&
+	rm -rf $graphdir $infodir/commit-graph &&
+	git reset --hard commits/10 &&
+	git rev-list -3 HEAD~4 >a &&
+	git rev-list -2 HEAD~2 >b &&
+	git rev-list -2 HEAD >c &&
+	git commit-graph write --split=no-merge --input=stdin-commits <a &&
+	git commit-graph write --split=no-merge --input=stdin-commits <b &&
+	test_line_count = 2 $graphdir/commit-graph-chain &&
+	git commit-graph write --split=merge-all --input=stdin-commits <c &&
+	test_line_count = 1 $graphdir/commit-graph-chain
+'
+
+test_expect_success '--split=no-merge always writes an incremental' '
+	test_when_finished rm -rf a b &&
+	rm -rf $graphdir &&
+	git reset --hard commits/2 &&
+	git rev-list HEAD~1 >a &&
+	git rev-list HEAD >b &&
+	git commit-graph write --split --input=stdin-commits <a &&
+	git commit-graph write --split=no-merge --input=stdin-commits <b &&
+	test_line_count = 2 $graphdir/commit-graph-chain
+'
+
+test_expect_success '--split=no-merge, --input=none writes nothing' '
+	test_when_finished rm -rf a graphs.before graphs.after &&
+	rm -rf $graphdir &&
+	git reset --hard commits/2 &&
+	git rev-list -1 HEAD~1 >a &&
+	git commit-graph write --split=no-merge --input=stdin-commits <a &&
+	ls $graphdir/graph-*.graph >graphs.before &&
+	test_line_count = 1 $graphdir/commit-graph-chain &&
+	git commit-graph write --split --input=none &&
+	ls $graphdir/graph-*.graph >graphs.after &&
+	test_cmp graphs.before graphs.after
+'
+
+test_expect_success '--split=merge-all, --input=none merges the chain' '
+	test_when_finished rm -rf a b &&
+	rm -rf $graphdir &&
+	git reset --hard commits/2 &&
+	git rev-list -1 HEAD~1 >a &&
+	git rev-list -1 HEAD >b &&
+	git commit-graph write --split=no-merge --input=stdin-commits <a &&
+	git commit-graph write --split=no-merge --input=stdin-commits <b &&
+	test_line_count = 2 $graphdir/commit-graph-chain &&
+	git commit-graph write --split=merge-all --input=none &&
+	test_line_count = 1 $graphdir/commit-graph-chain
 '
 
 test_done
