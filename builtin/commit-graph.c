@@ -34,9 +34,19 @@ static struct opts_commit_graph {
 	int progress;
 } opts;
 
+static struct object_directory *find_odb_or_die(struct repository *r,
+						const char *obj_dir)
+{
+	struct object_directory *odb = find_odb(r, obj_dir);
+	if (!odb)
+		die(_("could not find object directory matching %s"), obj_dir);
+	return odb;
+}
+
 static int graph_verify(int argc, const char **argv)
 {
 	struct commit_graph *graph = NULL;
+	struct object_directory *odb = NULL;
 	char *graph_name;
 	int open_ok;
 	int fd;
@@ -67,7 +77,8 @@ static int graph_verify(int argc, const char **argv)
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-	graph_name = get_commit_graph_filename(opts.obj_dir);
+	odb = find_odb_or_die(the_repository, opts.obj_dir);
+	graph_name = get_commit_graph_filename(odb);
 	open_ok = open_commit_graph(graph_name, &fd, &st);
 	if (!open_ok && errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
@@ -75,9 +86,9 @@ static int graph_verify(int argc, const char **argv)
 	FREE_AND_NULL(graph_name);
 
 	if (open_ok)
-		graph = load_commit_graph_one_fd_st(fd, &st);
-	 else
-		graph = read_commit_graph_one(the_repository, opts.obj_dir);
+		graph = load_commit_graph_one_fd_st(fd, &st, odb);
+	else
+		graph = read_commit_graph_one(the_repository, odb);
 
 	/* Return failure if open_ok predicted success */
 	if (!graph)
@@ -97,6 +108,7 @@ static int graph_write(int argc, const char **argv)
 	struct string_list lines;
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
+	struct object_directory *odb = NULL;
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -145,9 +157,10 @@ static int graph_write(int argc, const char **argv)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 	read_replace_refs = 0;
+	odb = find_odb_or_die(the_repository, opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(opts.obj_dir, flags, &split_opts))
+		if (write_commit_graph_reachable(odb, flags, &split_opts))
 			return 1;
 		return 0;
 	}
@@ -169,7 +182,7 @@ static int graph_write(int argc, const char **argv)
 		UNLEAK(buf);
 	}
 
-	if (write_commit_graph(opts.obj_dir,
+	if (write_commit_graph(odb,
 			       pack_indexes,
 			       commit_hex,
 			       flags,
